@@ -9,17 +9,16 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using System.Xml.Linq;
 
 namespace PhoneBook
 {
     public partial class Form1 : Form
     {
-        IContactRepository repository;
         public int contactId = 0;
         public Form1()
         {
             InitializeComponent();
-            repository = new ContactRepository();
         }
 
 
@@ -31,12 +30,18 @@ namespace PhoneBook
         private void SearchInput_TextChanged(object sender, EventArgs e)
         {
             string searchText = SearchInput.Text;
-            ContactTable.DataSource = repository.SearchBtNameAndFamily(searchText);
+            using (contact_DBEntities db = new contact_DBEntities())
+            {
+                ContactTable.DataSource = db.MyContacts.Where(c=>c.Name.Contains(searchText)||c.Family.Contains(searchText)).ToList();
+            }
         }
         private void LoadDataOnDataGrid()
         {
             ContactTable.AutoGenerateColumns = false;
-            ContactTable.DataSource = repository.SellectAll();
+            using (contact_DBEntities db = new contact_DBEntities())
+            {
+                ContactTable.DataSource = db.MyContacts.ToList();
+            }
         }
 
         private void DeleteBtn_Click(object sender, EventArgs e)
@@ -51,7 +56,12 @@ namespace PhoneBook
                 DialogResult confirmation = MessageBox.Show($"آیا از حدف {fullName} اطمینان دارید؟", "توجه", MessageBoxButtons.YesNo);
                 if (confirmation == DialogResult.Yes)
                 {
-                    repository.Delete(contactId);
+                    using(contact_DBEntities db = new contact_DBEntities())
+                    {
+                        MyContact cotact = db.MyContacts.Single(c => c.ContactID == contactId);
+                        db.MyContacts.Remove(cotact);
+                        db.SaveChanges();
+                    }
                     LoadDataOnDataGrid();
                 }
             }

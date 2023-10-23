@@ -2,18 +2,20 @@
 using PhoneBook.Services;
 using System;
 using System.Data;
+using System.Net;
 using System.Windows.Forms;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.ListView;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 
 namespace PhoneBook
 {
     public partial class AddOrEditForm : Form
     {
         public int contactId = 0;
-        IContactRepository repository;
+        contact_DBEntities db = new contact_DBEntities();
         public AddOrEditForm()
         {
             InitializeComponent();
-            repository = new ContactRepository();
         }
 
         private void AddOrEditForm_Load(object sender, EventArgs e)
@@ -27,13 +29,13 @@ namespace PhoneBook
             {
                 this.Text = "ویرایش اطلاعات";
                 AddOrEditBtn.Text = "ویرایش اطلاعات";
-                DataTable selectedContact = repository.SelectById(contactId);
-                NameInput.Text = selectedContact.Rows[0][1].ToString();
-                FamilyInput.Text = selectedContact.Rows[0][2].ToString();
-                AgeInput.Text = selectedContact.Rows[0][6].ToString();
-                PhoneNumberInput.Text = selectedContact.Rows[0][3].ToString();
-                EmailInput.Text = selectedContact.Rows[0][4].ToString();
-                AddressInput.Text = selectedContact.Rows[0][5].ToString();
+                MyContact contact = db.MyContacts.Find(contactId);
+                NameInput.Text = contact.Name;
+                FamilyInput.Text = contact.Family;
+                AgeInput.Value = contact.Age;
+                PhoneNumberInput.Text = contact.PhoneNumber;
+                EmailInput.Text = contact.Email;
+                AddressInput.Text = contact.Address;
             }
         }
 
@@ -55,25 +57,35 @@ namespace PhoneBook
                 bool isSuccessFull;
                 if (contactId == 0)
                 {
-                    isSuccessFull = repository.Insert(NameInput.Text, FamilyInput.Text, (int)AgeInput.Value, EmailInput.Text, PhoneNumberInput.Text, AddressInput.Text);
+                    MyContact newContact = new MyContact()
+                    {
+                        Name = NameInput.Text.ToString(),
+                        Family = FamilyInput.Text.ToString(),
+                        Age = int.Parse(AgeInput.Value.ToString()),
+                        PhoneNumber = PhoneNumberInput.Text.ToString(),
+                        Email = EmailInput.Text.ToString(),
+                        Address = AddressInput.Text.ToString()
+                    };
+                    db.MyContacts.Add(newContact);
                 }
                 else
                 {
-                    isSuccessFull = repository.Update(contactId, NameInput.Text, FamilyInput.Text, (int)AgeInput.Value, EmailInput.Text, PhoneNumberInput.Text, AddressInput.Text);
+                    MyContact contact = db.MyContacts.Find(contactId);
+                    contact.Name = NameInput.Text.ToString();
+                    contact.Family = FamilyInput.Text.ToString();
+                    contact.Age = int.Parse(AgeInput.Value.ToString());
+                    contact.PhoneNumber = PhoneNumberInput.Text.ToString();
+                    contact.Email = EmailInput.Text.ToString();
+                    contact.Address = AddressInput.Text.ToString();
+
                 }
-                if (isSuccessFull)
-                {
-                    MessageBox.Show("عملیات با موفقیت انجام شد", "موفقیت", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    DialogResult = DialogResult.OK;
-                }
-                else
-                {
-                    MessageBox.Show("عملیات با خطا مواجه شد", "خطا", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                }
+                db.SaveChanges();
+                MessageBox.Show("عملیات با موفقیت انجام شد", "موفقیت", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                DialogResult = DialogResult.OK;
             }
         }
 
-     
+
 
     }
 }
